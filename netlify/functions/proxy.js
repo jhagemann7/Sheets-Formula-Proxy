@@ -1,5 +1,17 @@
-
 export async function handler(event, context) {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
+    };
+  }
+
   const { query } = JSON.parse(event.body);
 
   const prompt = `You are a Google Sheets formula expert. Convert this plain English request into a Google Sheets formula:
@@ -25,7 +37,7 @@ Examples:
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`, // store your key securely here!
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
       model: 'gpt-3.5-turbo',
@@ -39,6 +51,7 @@ Examples:
     const errorData = await openaiResponse.json();
     return {
       statusCode: openaiResponse.status,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: errorData.error?.message || 'OpenAI API request failed' }),
     };
   }
@@ -50,12 +63,13 @@ Examples:
     const jsonResponse = JSON.parse(content);
     return {
       statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify(jsonResponse),
     };
   } catch {
-    // fallback if AI output is not JSON
     return {
       statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         formula: content,
         explanation: 'Formula generated successfully (fallback mode)',
